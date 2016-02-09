@@ -14,7 +14,7 @@
 //!
 //! ```ignore
 //! let some_c_linked_list = foreign_function_which_returns_c_linked_list();
-//! let rust_linked_list = CLinkedListMut::from_ptr(some_c_linked_list, |n| n.next);
+//! let rust_linked_list = unsafe { CLinkedListMut::from_ptr(some_c_linked_list, |n| n.next) };
 //! for (i, node) in rust_linked_list.iter().enumerate() {
 //!     println!("some_c_linked_list[{}] == {}", i, node.value);
 //! }
@@ -42,8 +42,8 @@ pub struct CLinkedListMutIterMut<'a, T: 'a, N: Fn(&T) -> *mut T + 'a> {
 
 impl<'a, T: 'a, N: Fn(&T) -> *mut T + 'a> CLinkedListMut<T, N> {
     /// Construct a `CLinkedListMut` by wrapping a C linked list. `head` points to the head element
-    /// of the list and can be NULL for a list of length 0. `next` is a function that takes a node
-    /// and returns a pointer to the next element.
+    /// of the list or is NULL for a list of length 0. `next` is a function that takes a node and
+    /// returns a pointer to the next element.
     ///
     /// # Example
     ///
@@ -57,7 +57,11 @@ impl<'a, T: 'a, N: Fn(&T) -> *mut T + 'a> CLinkedListMut<T, N> {
     /// ```
     ///
     /// Call this function as `CLinkedListMut::from_ptr(ptr_to_head, |n| n.next)`.
-    pub fn from_ptr(head: *mut T, next: N) -> CLinkedListMut<T, N> {
+    ///
+    /// # Unsafety
+    ///
+    /// This function is unsafe because it is up to the caller to ensure that `head` is valid.
+    pub unsafe fn from_ptr(head: *mut T, next: N) -> CLinkedListMut<T, N> {
         CLinkedListMut {
             head: head,
             next: next,
@@ -197,9 +201,9 @@ pub struct CLinkedListConstIter<'a, T: 'a, N: Fn(&T) -> *const T + 'a> {
 }
 
 impl<'a, T: 'a, N: Fn(&T) -> *const T + 'a> CLinkedListConst<T, N> {
-    /// Construct a `CLinkedListConst` by wrapping a C linked list. `head` points to the head element
-    /// of the list and can be NULL for a list of length 0. `next` is a function that takes a node
-    /// and returns a pointer to the next element.
+    /// Construct a `CLinkedListConst` by wrapping a C linked list. `head` points to the head
+    /// element of the list or is NULL for a list of length 0. `next` is a function that takes a
+    /// node and returns a pointer to the next element.
     ///
     /// # Example
     ///
@@ -213,7 +217,11 @@ impl<'a, T: 'a, N: Fn(&T) -> *const T + 'a> CLinkedListConst<T, N> {
     /// ```
     ///
     /// Call this function as `CLinkedListConst::from_ptr(ptr_to_head, |n| n.next)`.
-    pub fn from_ptr(head: *const T, next: N) -> CLinkedListConst<T, N> {
+    ///
+    /// # Unsafety
+    ///
+    /// This function is unsafe because it is up to the caller to ensure that `head` is valid.
+    pub unsafe fn from_ptr(head: *const T, next: N) -> CLinkedListConst<T, N> {
         CLinkedListConst {
             head: head,
             next: next,
@@ -322,7 +330,7 @@ mod tests{
     #[test]
     fn test_const() {
         let ptr: *const TestNodeConst = std::ptr::null();
-        let list = CLinkedListConst::from_ptr(ptr, |n| n.next);
+        let list = unsafe { CLinkedListConst::from_ptr(ptr, |n| n.next) };
         let vec: Vec<u32> = list.iter().map(|n| n.val).collect();
         assert_eq!(vec, &[]);
         assert_eq!(list.len(), 0);
@@ -330,7 +338,7 @@ mod tests{
         assert!(list.front().is_none());
 
         let ptr = make_list_const();
-        let list = CLinkedListConst::from_ptr(ptr, |n| n.next);
+        let list = unsafe { CLinkedListConst::from_ptr(ptr, |n| n.next) };
         let vec: Vec<u32> = list.iter().map(|n| n.val).collect();
         assert_eq!(vec, &[0, 1, 2]);
         assert_eq!(list.len(), 3);
@@ -364,7 +372,7 @@ mod tests{
     #[test]
     fn test_mut() {
         let ptr: *mut TestNodeMut = std::ptr::null_mut();
-        let list = CLinkedListMut::from_ptr(ptr, |n| n.next);
+        let list = unsafe { CLinkedListMut::from_ptr(ptr, |n| n.next) };
         let vec: Vec<u32> = list.iter().map(|n| n.val).collect();
         assert_eq!(vec, &[]);
         assert_eq!(list.len(), 0);
@@ -372,7 +380,7 @@ mod tests{
         assert!(list.front().is_none());
 
         let ptr = make_list_mut();
-        let mut list = CLinkedListMut::from_ptr(ptr, |n| n.next);
+        let mut list = unsafe { CLinkedListMut::from_ptr(ptr, |n| n.next) };
         let vec: Vec<u32> = list.iter().map(|n| n.val).collect();
         assert_eq!(vec, &[0, 1, 2]);
         assert_eq!(list.len(), 3);
