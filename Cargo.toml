@@ -1,6 +1,6 @@
 [package]
 name = "c_linked_list"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Andrew Cann <shum@canndrew.org>"]
 description = "Utilities for handling NULL-terminated C linked lists"
 documentation = "http://canndrew.org/rust-doc/c_linked_list"
