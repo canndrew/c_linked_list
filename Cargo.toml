@@ -4,7 +4,7 @@ version = "1.1.0"
 authors = ["Andrew Cann <shum@canndrew.org>"]
 description = "Utilities for handling NULL-terminated C linked lists"
 documentation = "http://canndrew.org/rust-doc/c_linked_list"
-license = "GPL-3.0"
+license = "MIT OR BSD-3-Clause"
 readme = "README.md"
 keywords = ["ffi", "linked_list"]
 
